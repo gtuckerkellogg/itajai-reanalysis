@@ -1,0 +1,35 @@
+paper	subset	exposure level	exposure	outcome	n
+KC22	NA	0	non-user	NA	45716
+KC22	NA	0	non-user	infection	3034
+KC22	NA	0	non-user	hospitalisation	99
+KC22	NA	0	non-user	death	79
+KC22	infected (PSM)	0	non-user	NA	3034
+KC22	infected (PSM)	0	non-user	hospitalisation	99
+KC22	infected (PSM)	0	non-user	death	79
+KC22	infected	0	non-user	NA	3034
+KC22	infected	0	non-user	hospitalisation	99
+KC22	infected	0	non-user	death	79
+KC22	NA	1	user	NA	113844
+KC22	NA	1	user	infection	4197
+KC22	NA	1	user	hospitalisation	86
+KC22	NA	1	user	death	62
+KC22	infected (PSM)	1	user	NA	3034
+KC22	infected (PSM)	1	user	hospitalisation	44
+KC22	infected (PSM)	1	user	death	25
+KC22	infected	1	user	NA	4197
+KC22	infected	1	user	hospitalisation	86
+KC22	infected	1	user	death	62
+KB22	NA	2	irregular	NA	33971
+KB22	NA	2	irregular	infection	1542
+KB22	NA	2	irregular	hospitalisation	38
+KB22	NA	2	irregular	death	29
+KB22	infected	2	irregular	NA	1542
+KC22	infected	2	irregular	hospitalisation	38
+KC22	infected	2	irregular	death	29
+KB22	NA	3	regular	NA	8325
+KB22	NA	3	regular	infection	283
+KB22	NA	3	regular	hospitalisation	0
+KB22	NA	3	regular	death	2
+KB22	infected	3	regular	NA	283
+KC22	infected	3	regular	hospitalisation	0
+KC22	infected	3	regular	death	2
