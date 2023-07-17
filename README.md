@@ -2,6 +2,11 @@
 
 ## Getting the data
 
+- download the zip file from osf.io/uxhaf into the `data/` folder and unzip into a new directory called "kerr"
+- Download https://s3.sa-east-1.amazonaws.com/ckan.saude.gov.br/SRAG/2022/INFLUD20-26-09-2022.csv and put it into `/data`
+
+
+
 
 
 ## Regenerating the figures and tables
