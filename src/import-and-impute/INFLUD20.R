@@ -4,71 +4,92 @@
 library(here) #independent of Rstudio, sets here() to the git root
 library(tidyverse)
 library(readr)
+source(here("src/data/global_params.R"), local = TRUE)
+source(here("src/data/keep_results.R"), local = TRUE)
 
 
-dat_all <- local({
-    ## Now cross-check with Brazilian state data
-    ## download this data from google drive, too big for git
-    INFLUD20 <- here('data',"INFLUD20-26-09-2022.csv")
-    latest_birth_date <- as.Date("2020-01-01") - years(18)
 
-    ## The data is a bit messy, should clean it up 
-    colspec <- spec_delim(INFLUD20,delim=";")
+if (!exists("dat_all")) { 
 
-    for (i in which(str_starts(names(colspec$cols),"DT_"))) {
-        colspec$cols[[i]] <- col_date(format="%d/%m/%Y")
-    }
+    dat_all <- local({
 
-    colspec$cols[['OUT_ANIM']] <- col_character()
-    colspec$cols[['FLUASU_OUT']] <- col_character()
-    colspec$cols[['FLUBLI_OUT']] <- col_character()
+        race_dict <- c("1" = "Branca",
+                       "2" = "Preta",
+                       "3" = "Amarela",
+                       "4" = "Parda",
+                       "9" = "Ignorado")
+        
+        dat_all_file <- here("data","dat_all.rds")
+        
+        if (!file.exists(dat_all_file)) { 
+            ## Now cross-check with Brazilian state data
+            ## download this data from google drive, too big for git
+            INFLUD20 <- here('data',"INFLUD20-26-09-2022.csv")
+            ## Optional newer file, misses a couple of matches
+                                        #  INFLUD20 <- here('data',"INFLUD20-01-05-2023.csv")
+            latest_birth_date <- as.Date("2020-01-01") - years(18)
 
-    dat_all <- suppressWarnings(read_delim(INFLUD20,
-                                           delim=';',col_types=colspec))
+            ## The data is a bit messy, should clean it up 
+            colspec <- spec_delim(INFLUD20,delim=";")
+
+            for (i in which(str_starts(names(colspec$cols),"DT_"))) {
+                colspec$cols[[i]] <- col_date(format="%d/%m/%Y")
+            }
+
+            colspec$cols[['OUT_ANIM']] <- col_character()
+            colspec$cols[['CS_RACA']] <- col_character()
+            colspec$cols[['FLUASU_OUT']] <- col_character()
+            colspec$cols[['FLUBLI_OUT']] <- col_character()
+
+            dat_all <- suppressWarnings(read_delim(INFLUD20,
+                                                   delim=';',col_types=colspec))
                                         # print(problems(dat_all),n=30) ## seems OK now
 
-    dat_all <- dat_all[-problems(dat_all)$row,] |>
-        mutate(hospitalised=HOSPITAL==1,
-               death=EVOLUCAO>1) |>
-        rename(date_birth=DT_NASC,
-               date_onset=DT_SIN_PRI,
-               date_notified=DT_NOTIFIC,
-               date_hospitalised=DT_INTERNA,
-               date_death=DT_EVOLUCA,
-               sex=CS_SEXO) |>
-        replace_na(list(hospitalised=FALSE,death=FALSE)) |>
-        filter(date_birth <= latest_birth_date,
-               !(death & is.na(date_death)),
-               !(hospitalised & is.na(date_hospitalised)))
-    dat_all
-})
+            dat_all <- dat_all[-problems(dat_all)$row,] |>
+                rename(date_birth=DT_NASC,
+                       date_onset=DT_SIN_PRI,
+                       date_notified=DT_NOTIFIC,
+                       race=CS_RACA,
+                       date_hospitalised=DT_INTERNA,
+                       date_death=DT_EVOLUCA,
+                       type_2_diabetes=DIABETES,
+                       sex=CS_SEXO,
+                       hospitalised=HOSPITAL) |>
+                mutate(hospitalised = ((hospitalised == 1) | (!is.na(date_hospitalised))),
+                       type_2_diabetes = ((type_2_diabetes == 1)),
+                       race=unname(race_dict[race]),
+                       death = ((EVOLUCAO == 2))) |> 
+                replace_na(list(hospitalised=FALSE,death=FALSE,type_2_diabetes=FALSE)) |>
+                filter(date_birth <= latest_birth_date)
 
+                write_rds(dat_all,dat_all_file)
+        } else { 
+            dat_all <- read_rds(dat_all_file)
+        }
+        dat_all
+    })
+}
 
-citywide_infected <- local({
+if (!exists("citywide_infected")) {
+    citywide_infected <- local({
+        
+        ## We consider first the possible matches from DATASUS, being as generous as possible considering the
+        ## wording of the paper.
+        
+        ## The city-wide program was designed for residents of \Itajai, which we capture by filtering on
+        ## resident status.
+        
+        ## For non-residents who joined the program, we also include ID_MUNICIP and IT_MN_INTE, assuming that
+        ## they would have been recorded through the local hospitals or reported by the city itself.
+        
+        citywide_infected <-
+            dat_all |>
+            filter(PCR_SARS2 == 1 | CLASSI_FIN==5) |>
+            filter(date_onset >= as.Date("2020-01-01"),date_onset <= as.Date("2020-12-31")) |>
+            filter(if_all(c("ID_RG_RESI","ID_MN_RESI"), ~ . == "ITAJAI") |    # True city residents
+                   if_any(c("ID_MUNICIP","ID_MN_INTE"),~ . == "ITAJAI")) # Reported through city
 
-## How to filter.  Email from Ana, 1 Dec 2022:
-## ID_MUNICIP : the city where the case has been notified to the National Health Authority.
+                   citywide_infected
 
-## ID_REGIONA: micro-region where the case has been notified to the National Health Authority --> basically
-## means Itajaí city and other surrounding small towns.
-
-## ID_MN_INTE  and ID_RG_INTE : respectively, the city and micro-region where the medical center that admitted
-## the patient was located.
-
-
-## ID_MN_RESI and ID_RG_RESI : respectively, the city and micro-region where the patient LIVED
-
-
-## Kerr and cols. could neither retrieve data from medical centers outside Itajaí nor included patients from
-## other cities even if they had taken ivermectin from the Itajaí's citywide program. Therefore, I would keep
-## the last 4 filters and ignore "ID_MUNICIP" and/or "ID_REGIONA" since the case notification could come from
-## the first hospital visit in a center outside of Itajaí city - the patients would be eventually transferred
-## to Itajaí city.
-
-                                        # Ana's recommendation
-dat_all |>
-    filter(PCR_SARS2 == 1 | CLASSI_FIN==5) |>    
-    filter_at(vars(any_of(c("ID_MN_INTE","ID_RG_INTE","ID_MN_RESI","ID_RG_RESI"))),
-              any_vars( . == "ITAJAI"))
-
-})
+    })
+}

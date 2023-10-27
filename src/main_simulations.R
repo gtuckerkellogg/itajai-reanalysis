@@ -7,39 +7,26 @@
 library(here)
 library(tidyverse)
 library(tictoc)
+library(glue)
 set.seed(as.numeric(as.Date("1996-02-12")))
 source(here("src/simulation_models.R"),local=TRUE)
 
-iterations <- 10
+gc <- function() {
+    invisible(base::gc())
+}
 
-## This is the iENR model
+iterations <- 1000
 
-tic(sprintf("sim1 (%d times)",iterations),quiet=FALSE)
-sim1 <- n_rounds_sim(iterations,sim1_model)
-toc()
-tic(sprintf("sim1 (iENR) saving"))
-save(sim1,file=here('results/sim1.RData'))
-toc()
-rm(sim1)
+models <- c("sim1", "sim2", "sim3")
+models <- c("sim3")
 
-## This runs the iINF model
-
-tic(sprintf("sim2 (%d times)",iterations))
-sim2 <- n_rounds_sim(iterations,sim2_model)
-toc()
-tic(sprintf("sim2 (iINF) saving"))
-save(sim2,file=here('results/sim2.RData'))
-rm(sim2)
-toc()
-
-
-## This runs the iKC22 model
-
-tic(sprintf("sim3 (%d times)",iterations))
-sim3 <- n_rounds_sim(iterations,sim3_model)
-toc()
-tic(sprintf("sim3 (iKC22) saving"))
-save(sim3,file=here('results/sim3.RData'))
-rm(sim3)
-toc()
+for (model_name in models) {
+    print(tic(glue("{model_name}: ({iterations} times)"),quiet=FALSE))
+    sim_model <- eval(sym(glue("{model_name}_model")))
+    cohorts <- n_rounds_sim(iterations,sim_model)
+    toc()
+    tic(glue("saving {model_name}"))
+    write_rds(cohorts,file=here("results",glue("{model_name}.rds")))
+    toc()
+}
 

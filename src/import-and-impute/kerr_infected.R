@@ -7,7 +7,7 @@ library(lubridate)
 
 kerr_infected <- local({
     source(here("src","data","kerr_datasets.R"),local=TRUE)
-    readxl::read_excel(kerr_files$ds3) %>%
+    readxl::read_excel(kerr_files$ds3) |>
         janitor::clean_names() %>%
         mutate(date_birth=as.Date(birth_date)) %>%
         select(-birth_date) %>% 

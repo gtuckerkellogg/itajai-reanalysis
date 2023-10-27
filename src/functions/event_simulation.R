@@ -5,7 +5,7 @@ library(dplyr)
 library(janitor)
 
 ##' Simulate (by sampling) the Kerr et al study using Itajai death data.
-##' Generate a tibble with deaths sampled from Itajai matching the kerr count, and symtpom onset occurring the
+##' Generate a tibble with deaths sampled from Itajai matching the kerr count, and symptom onset occurring the
 ##' study period. The number of observed deaths in the study period matches Kerr et al, but uncounted deaths
 ##' may occur after the study period.
 ##' @title death_simulation_model
@@ -17,7 +17,7 @@ death_simulation_model <- function(model_detailed,cutoff_date=paper$end) {
     source(here("src/data/global_params.R"),local=TRUE)    
     death_table <- model_detailed |>
         filter(death,
-               if_all(c(date_death,date_onset), ~ !is.na(.)))  |>
+               if_any(c(date_death,date_onset), ~ !is.na(.)))  |>
         mutate(id=NA,infected=TRUE) |> 
         select(id,infected,hospitalised,death,date_onset,date_hospitalised,date_death)        
     function() {
@@ -43,9 +43,9 @@ hosp_simulation_model <- function(model_detailed,cutoff_date=paper$end) {
     source(here("src/data/global_params.R"),local=TRUE)
     simulate_deaths <- death_simulation_model(model_detailed,cutoff_date)
     hospitalised_survivors <- model_detailed |>
-        filter(hospitalised,!death,
-               if_all(c(date_hospitalised,date_onset), ~ !is.na(.))) |>
-        mutate(id=NA,infected=TRUE,hospitalised=TRUE,death=FALSE,date_death=NA) |> 
+        filter(hospitalised,
+               if_any(c(date_hospitalised,date_onset), ~ !is.na(.))) |>
+        mutate(id=NA,infected=TRUE,hospitalised=TRUE,death=FALSE,date_death=as.Date(NA)) |> 
         select(id,infected,hospitalised,death,date_onset,date_hospitalised,date_death)        
     function() {
         repeat {

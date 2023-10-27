@@ -46,3 +46,18 @@ kerr_rr <- local({
             relocate(exposure,outcome,subset)
     }
 })
+
+
+kerr_neg <- local({
+
+    function(exposures=c('non-user','user'),outcome='infection',infected_only=FALSE) {
+
+        rr <- kerr_rr(exposures,outcome,infected_only)
+        counts <- rr |>
+            select(kerr_true,kerr_total) |>
+            colSums()
+
+        select(rr,exposure,outcome,subset) |>
+            mutate(rate=counts[1]/counts[2])
+    }
+})

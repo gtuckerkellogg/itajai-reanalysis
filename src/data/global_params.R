@@ -1,18 +1,24 @@
 library(lubridate)
-
+library(purrr)
+library(stringr)
 
 
 model <- list(
     ## this is the max delay (in days) that is included when generating Weibull distributions
     delay_limit=30,
     ## chance of stopping on infection
-#    p_inf_stop=c(rep(0.5,29),rep(0.1,80-29)),
     p_inf_stop=c(rep(0.3,29),rep(0.05,80-29)),
     ## chance of stopping on hospitalisation
     p_hosp_stop=rep(1,80),
     seed=as.numeric(as.Date("1996-02-12")),
-    last_registration=lubridate::ymd("2020-09-30")
+    last_registration=lubridate::ymd("2020-09-30"),
+    DATASUS=here('data',"INFLUD20-26-09-2022.csv")
 )
+
+
+model_names <- list(sim1 = 'i-ENR',
+                    sim2 = 'i-INF',
+                    sim3 = "i-KC22")
 
 
 
@@ -54,3 +60,5 @@ paper$deaths_total = paper$deaths_users + paper$deaths_non_users
 
 ## city stats
 paper$itajai_adults=161545
+
+
