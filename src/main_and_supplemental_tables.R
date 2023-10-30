@@ -110,7 +110,7 @@ overview_gt <- function(outcome_df) {
 }
 
 
-overview_gt_to_latex <- function(gt_obj, model_name, probabilistic, infected_only) {
+overview_gt_to_latex <- function(gt_obj, model_name, probabilistic, infected_only,label) {
     caption <- sprintf(
         "\\caption{%s %s %s}",
         sprintf("%s model with %s stop on infection.", model_name, ifelse(probabilistic, "probabilistic", "uniform")),
@@ -136,7 +136,7 @@ overview_gt_to_latex <- function(gt_obj, model_name, probabilistic, infected_onl
             fixed("\\begin{tabulary}{l|rrrrrrrr}"),
             "\n\n\\begin{table}[h!tb]\n\\footnotesize\n\\begin{tabulary}{\\linewidth}{lRrrRRrrR}"
         ) |>
-        paste0(sprintf("%s\n\\end{table}\n\n", caption), collapse = "\n")
+        paste0(sprintf("%s\n%s\n\\end{table}\n\n", caption,glue("\\label{{tab:{label}}}")), collapse = "\n")
 }
 
 
@@ -215,7 +215,8 @@ supplemental_tables <- c(supplemental_tables,
                                      cols_hide(columns=matches("corrected")) |>
                                      overview_gt_to_latex(l$name,
                                                           probabilistic = l$stopping == "probabilistic",
-                                                          infected_only = l$subset == "infected")
+                                                          infected_only = l$subset == "infected",
+                                                          label=l$name)
                              }))
 
 
@@ -224,8 +225,10 @@ cat(as.character(supplemental_tables), file = here("results/supplementary.tex"))
 
 
 table4 <- overview_gt(overview_dfs[["sim3-all-probabilistic"]])
-
-cat(as.character(overview_gt_to_latex(table4,"i-KC22", probabilistic=TRUE, infected_only=FALSE)),
+cat(as.character(overview_gt_to_latex(table4,"i-KC22",
+                                      probabilistic=TRUE,
+                                      infected_only=FALSE,
+                                      label="main_results")),
     file=here("results/table4.tex"))
 
    

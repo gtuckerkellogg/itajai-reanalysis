@@ -40,7 +40,7 @@ kerr_early_infection_tbl <- local({
 
     match_death_universe <- 
         citywide_infected |>
-        filter(death) |> select(-hospitalised)
+        filter(death) |> select(-hospitalised,-race,-type_2_diabetes)
 
     message(sprintf("There are %d records to consider for matching deaths between KC22 and DATASUS",nrow(match_death_universe)))
     results[['match_death_universe']] = nrow(match_death_universe)
@@ -50,8 +50,7 @@ kerr_early_infection_tbl <- local({
                    multiple = "all") |>
         filter(date_onset <= paper$end) |>
         arrange(desc(date_onset)) |>
-        mutate(hospitalised=ifelse(is.na(date_hospitalised),hospitalised,TRUE)) |>
-        group_by(date_birth, sex, hospitalised, death) |>
+        group_by(date_birth, sex, death) |>
         mutate(n_matches = n()) |>
         filter(row_number() == 1) |>
         ungroup() |>
@@ -65,7 +64,7 @@ kerr_early_infection_tbl <- local({
     
     match_hosp_universe <- 
         citywide_infected |>
-        filter(hospitalised,!death) |> select(-death)
+        filter(hospitalised,!death) |> select(-death,-race,-type_2_diabetes)
 
     message(sprintf("There are %d records to consider for matching hospitalised survivors between KC22 and DATASUS",nrow(match_hosp_universe)))
     results[['match_hosp_universe']] = nrow(match_hosp_universe)
@@ -77,6 +76,7 @@ kerr_early_infection_tbl <- local({
         filter(date_onset <= paper$end) |>
         arrange(desc(date_onset)) |>
         group_by(date_birth, sex, hospitalised, death) |>
+        group_by(date_birth, sex, death) |>
         mutate(n_matches = n()) |>
         filter(row_number() == 1) |>
         ungroup() |>

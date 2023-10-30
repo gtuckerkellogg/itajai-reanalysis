@@ -6,16 +6,15 @@ local({
     library(purrr)
     library(here)
     library(stringr)
-    source(here("src/data/global_params.R"), local = TRUE)
+    source(here::here("src/data/global_params.R"), local = TRUE)
 
-    keysfile <- here("results","keys.tex")
+    keysfile <- here::here("results","keys.tex")
     invisible(suppressWarnings(file.remove(keysfile)))
     keysfile <- file(keysfile,"w")
 
     cat(
         map_chr(sort(names(as.list(paper))),
                 function(name) {
-                    print(name)
                     sprintf("\\pgfkeyssetvalue{/KC22/%s}{%s}\n",name,paper[[name]])
         }
         ),
@@ -24,11 +23,14 @@ local({
     cat(c(sprintf("\\pgfkeyssetvalue{/model/%s}{%s}\n","high_stop",min(model$p_inf_stop)),
           sprintf("\\pgfkeyssetvalue{/model/%s}{%s}\n","low_stop",max(model$p_inf_stop))),
         file=keysfile)
+
+    if (!exists('results')) {
+        result=list() 
+    }
     
     cat(
         map_chr(sort(names(as.list(results))),
                 function(name) {
-                    print(name)
                     val = results[[name]]
                     sprintf("\\pgfkeyssetvalue{/results/%s}{%s}\n",name,val)
         }

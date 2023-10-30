@@ -18,7 +18,6 @@ gc <- function() {
 iterations <- 1000
 
 models <- c("sim1", "sim2", "sim3")
-models <- c("sim3")
 
 for (model_name in models) {
     print(tic(glue("{model_name}: ({iterations} times)"),quiet=FALSE))

@@ -1,6 +1,6 @@
 library(here)
 
-.resultsfile <- here("results/results.RData")
+.resultsfile <- here::here("results/results.RData")
 
 if (!exists('results')) {
     results <- tryCatch({
@@ -26,6 +26,6 @@ if (!exists('results')) {
 }
 
 .Last <- function() {
-    source(here("src/data/pgfkeys_params.R"),local=TRUE)
-
+    library(here)
+    source(here::here("src/data/pgfkeys_params.R"),local=TRUE)
 }

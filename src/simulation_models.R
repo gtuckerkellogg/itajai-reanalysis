@@ -102,9 +102,10 @@ sim3_model <- local({
                date_onset = paper$start+days)
 
     ## now predict using a loess smoother
-    mapped$pred <- predict(loess(n ~ days,mapped,span=0.2,degree=0),model=TRUE); plot(mapped$pred)
+    mapped$pred <- predict(loess(n ~ days,mapped,span=0.1,degree=0),model=TRUE);
+    plot(mapped$date_onset,mapped$pred)
     mapped$.weights <- (mapped$pred - min(mapped$pred))/(max(mapped$pred) - min(mapped$pred))
-
+    #plot(mapped$date_onset,mapped$.weights)
     overall_imputed <- imputed_infections |> restrict_dates()
     mapped_imputed <- mapped |> 
         slice_sample(n=nrow(imputed_infections),replace=TRUE,weight_by=.weights) |>

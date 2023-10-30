@@ -8,8 +8,10 @@
 ## written by Robin Mills
 ## Revised by Greg Tucker-Kellogg
 
+suppressPackageStartupMessages({
 library(here) # independent of Rstudio, sets here() to the git root
 library(tidyverse)
+library(janitor)
 library(readr)
 library(readxl)
 library(gt)
@@ -22,15 +24,16 @@ source(here("src/data/global_params.R"), local = TRUE)
 source(here("src/data/keep_results.R"), local = TRUE)
 library(gtsummary)
 library(patchwork)
-
+options(dplyr.summarise.inform = FALSE)
+})
 source(here("src/import-and-impute", "INFLUD20.R"), local = TRUE)
 source(here("src", "import-and-impute", "kerr_early_infection_match.R"), local = TRUE)
 source(here("src/import-and-impute/simulated_enrolment.R"))
 
 write_tsv(kerr_early_infection_tbl,file=here("results/kerr_sus_match.tsv"))
   
+message("Comparing in 2nd half 2020")
 
-message("2020 2H")
 onset_in_2h <- citywide_infected |>
     filter(ID_MN_RESI=="ITAJAI", ID_RG_RESI=="ITAJAI") |>
     filter(date_birth <= paper$start - years(18)) |>
@@ -47,7 +50,8 @@ deaths_in_2h <- citywide_infected |>
 results[['deaths_2H_2020']] <- sum(deaths_in_2h$death)
 results[['hosp_2H_2020']] <- sum(deaths_in_2h$hospitalised)
 
-message("study period")
+message("Comparing in study period")
+
 onset_in_period <- citywide_infected |>
     filter(ID_MN_RESI=="ITAJAI", ID_RG_RESI=="ITAJAI") |>
     filter(date_birth <= paper$start - years(18)) |>
@@ -60,7 +64,6 @@ hospitalised_in_period <- citywide_infected |>
     filter(ID_MN_RESI=="ITAJAI", ID_RG_RESI=="ITAJAI") |>
     filter(date_birth <= paper$start - years(18)) |>
     filter(hospitalised,date_hospitalised %within% paper$study_period)
-
 deaths_in_period <- citywide_infected |>
     filter(ID_MN_RESI=="ITAJAI", ID_RG_RESI=="ITAJAI") |>
     filter(date_birth <= paper$start - years(18)) |>
@@ -71,7 +74,6 @@ results[['deaths_after_onset_in_study_period']] <- sum(onset_in_period$death)
 results[['hosp_after_onset_in_study_period']] <- sum(onset_in_period$hospitalised)
 results[['deaths_in_study_period']] <- nrow(deaths_in_period)
 results[['hosp_in_study_period']] <- nrow(hospitalised_in_period)
-
 
 missed_deaths <-
     anti_join(onset_in_period,kerr_early_infection_tbl,by=c('date_birth', 'sex', 'death')) |>
@@ -158,7 +160,7 @@ matched_p <- kerr_early_infection_tbl |>
     ggplot(aes(x = date)) +
     study_rect +
     ylab("count") + xlab("Event date") + 
-    geom_histogram(binwidth = 2) + scale_fill_hc() +
+    geom_histogram(binwidth = 2,na.rm=TRUE) + scale_fill_hc() +
     facet_wrap(fct_rev(event) ~ .,nrow=3,scales='free_y',strip.position='right',dir='h') +
     scale_y_continuous(breaks= pretty_breaks()) +
     cowplot::theme_half_open() + 
@@ -179,7 +181,7 @@ fig_s1 <- missed_deaths |>
     study_rect +
     annotate("text", x = as.Date("2020-09-19"), y = 12, label = "KC22 study period") +    
     ylab("count") + xlab("Event date") +
-    geom_histogram(binwidth = 2) + scale_fill_hc() +
+    geom_histogram(binwidth = 2,na.rm=TRUE) + scale_fill_hc() +
     facet_wrap(event ~ .,nrow=3,scales='free_y',strip.position='left') +
     scale_y_continuous(breaks= pretty_breaks()) +
     cowplot::theme_half_open() +
@@ -203,7 +205,7 @@ citywide_p <- citywide_infected |>
     annotate("text", x = as.Date("2020-09-19"), y = 36, label = "KC22 study period") +
     xlab("Symptom onset date") +
     ylab("count") +
-    geom_histogram(binwidth = 2, alpha = 0.6, fill = .colors[1]) +
+    geom_histogram(binwidth = 2, na.rm=TRUE,alpha = 0.6, fill = .colors[1]) +
     common_xlim +
     ggtitle("Symptom onset date for Itajaí cases leading to hospitalisation or death (DATASUS)") +
     cowplot::theme_half_open()

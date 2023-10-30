@@ -81,15 +81,18 @@ if (!exists("citywide_infected")) {
         
         ## For non-residents who joined the program, we also include ID_MUNICIP and IT_MN_INTE, assuming that
         ## they would have been recorded through the local hospitals or reported by the city itself.
-        
+
         citywide_infected <-
             dat_all |>
             filter(PCR_SARS2 == 1 | CLASSI_FIN==5) |>
             filter(date_onset >= as.Date("2020-01-01"),date_onset <= as.Date("2020-12-31")) |>
             filter(if_all(c("ID_RG_RESI","ID_MN_RESI"), ~ . == "ITAJAI") |    # True city residents
-                   if_any(c("ID_MUNICIP","ID_MN_INTE"),~ . == "ITAJAI")) # Reported through city
+                   if_any(c("ID_MUNICIP","ID_MN_INTE"),~ . == "ITAJAI")) |> # Reported through city
+            ## No use retaining a hospitalised one for a
+            ## match if we can't get the date of hospitalisation            
+            filter(!(hospitalised & is.na(date_hospitalised)))
 
-                   citywide_infected
+        citywide_infected
 
     })
 }
